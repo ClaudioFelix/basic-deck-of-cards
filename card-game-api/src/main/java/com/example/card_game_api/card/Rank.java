@@ -1,3 +1,8 @@
+/*
+* This enumerates the possible card ranks and associates it to the number of points
+* it provides.
+*/
+
 package com.example.card_game_api.card;
 
 import lombok.Getter;
