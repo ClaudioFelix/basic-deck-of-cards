@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { Card, Player, DeckInfo, PlayerScore, PlayerScoreResponseDto, AddPlayerRequestDto, DealRequestDto, GameDto, AddPlayerResponseDto } from './types/api';
+import { 
+  Card,
+  Player,
+  DeckInfo,
+  PlayerScore,
+  PlayerScoreResponseDto,
+  AddPlayerRequestDto,
+  DealRequestDto,
+  GameDto,
+  AddPlayerResponseDto,
+  GameSummaryDto } from './types/api';
+import { addDeck, addPlayer, createGame, dealCards, deleteGame, getDeckInfo, getGameList, getPlayerHand, getPlayerScores, removePlayer, shuffle } from './services/gameApi';
 
 type CardProps = {
-  card: Card; // Agora podemos usar o tipo 'Card' diretamente
+  card: Card;
 };
 
 function CardComponent({card}: CardProps): React.ReactElement {
@@ -16,6 +27,7 @@ function CardComponent({card}: CardProps): React.ReactElement {
 
 function App() {
 
+  const [gameList, setGameList] = useState<GameSummaryDto[]>([]);
   const [gameId, setGameId] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [deckInfo, setDeckInfo] = useState<DeckInfo | null>(null);
@@ -26,23 +38,23 @@ function App() {
   const [dealAmount, setDealAmount] = useState<number>(1);
   const [message, setMessage] = useState<string>('Welcome! Create a new game to start.');
 
-  const API_URL = 'http://localhost:8080';
+
+  const fetchGameList = async () => {
+    try {
+      const data: GameSummaryDto[] = await getGameList();
+      setGameList(data);
+    } catch (error) {
+      setMessage(`Error: ${(error as Error).message}`);
+    }
+  };
 
   const handleCreateGame = async () => {
     try {
       setMessage('Creating a new game...');
-      const response = await fetch(`${API_URL}/games`, {
-        method: 'POST',
-      });
-      
-      if (response.status !== 201) {
-        throw new Error(`Failed to create game: ${response.statusText}`);
-      }
-
-      const data: GameDto = await response.json();
+      const data: GameDto = await createGame();
       setGameId(data.id);
       setMessage(`Game created: ${data.id}. Add decks and players.`);
-      
+      fetchGameList();
       setPlayers([]);
       setDeckInfo(null);
       setSelectedPlayer(null);
@@ -52,16 +64,50 @@ function App() {
     }
   };
 
+  const handleDeleteGame = async (idToDelete: string) => {
+    if (!window.confirm(`Are you sure you want to close the game ${idToDelete}?`)) {
+      return;
+    }
+    try {
+      deleteGame(idToDelete)
+      setMessage(`Game ${idToDelete} closed.`);
+      fetchGameList();
+
+      if (gameId === idToDelete) {
+        setGameId(null);
+      }
+    } catch (error) {
+      setMessage(`Erro: ${(error as Error).message}`);
+    }
+  };  
+
+  const handleRemovePlayer = async (playerId: string) => {
+    const player = players.find(player => player.id === playerId);
+    const playerName = player? player.name : playerId;
+    if(!gameId){
+      setMessage(`Please select a game.`);
+      return
+    }
+    if (!window.confirm(`Are you sure you want to remove player ${playerName}?`)) {
+      return;
+    }
+    try {
+      await removePlayer(gameId, playerId);
+
+      setMessage(`Player ${playerName} removed.`);
+      fetchPlayerScores(); 
+    } catch (error) {
+      setMessage(`Erro: ${(error as Error).message}`);
+    }
+  };
+
   const handleAddStandardDeck = async () => {
     if (!gameId) {
       setMessage('Create a game before adding a deck');
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/games/${gameId}/add-deck`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to add a deck');
+      await addDeck(gameId);
       setMessage('A standard deck of 52 cards was added.');
       fetchDeckInfo();
     } catch (error) {
@@ -75,10 +121,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch(`${API_URL}/games/${gameId}/shuffle`, {
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('Failed to shuffle');
+      shuffle(gameId)
       setMessage('Deck shuffled.');
       fetchDeckInfo();
     } catch (error) {
@@ -92,23 +135,7 @@ function App() {
       return;
     }
     try {
-
-      const addPlayerRequest: AddPlayerRequestDto = {
-        name: playerName
-      }
-      const response = await fetch(`${API_URL}/games/${gameId}/players`, {
-        method: 'POST',
-                headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(addPlayerRequest)
-      });
-      
-      if (response.status !== 201) {
-        throw new Error('Failed to add a player');
-      }
-
-      const data: AddPlayerResponseDto = await response.json();
+      const data: AddPlayerResponseDto = await addPlayer(gameId, playerName);
       const newPlayer: Player = { id: data.id, name: newPlayerName, hand: [] };
       setPlayers(prevPlayers => [...prevPlayers, newPlayer]);
       
@@ -118,37 +145,24 @@ function App() {
       if (players.length === 0) {
         setSelectedPlayer(newPlayer);
       }
+      fetchPlayerScores()
     } catch (error) {
       setMessage(`Erro: ${(error as Error).message}`);
     }
   };
 
   const handleDealCards = async () => {
+    if (!gameId) {
+      setMessage('Load a game before dealing cards.');
+      return;
+    }
     if (!selectedPlayer) {
       setMessage('Please select a player for dealing cards.');
       return;
     }
 
     try {
-      const dealRequest: DealRequestDto = {
-        playerId: selectedPlayer.id,
-        amount: dealAmount
-      };
-
-      const response = await fetch(`${API_URL}/games/${gameId}/deal-cards`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dealRequest)
-      });
-
-      if (response.status !== 201) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to deal cards');
-      }
-
-      const dealtCards = await response.json();
+      const dealtCards: Card[] = await dealCards(gameId, selectedPlayer.id, dealAmount);
       setMessage(`${dealtCards.length} cards dealt to ${selectedPlayer.name}.`);
 
       fetchPlayerHand(selectedPlayer.id);
@@ -163,9 +177,7 @@ function App() {
   const fetchDeckInfo = async () => {
     if (!gameId) return;
     try {
-      const response = await fetch(`${API_URL}/games/${gameId}/deck`);
-      if (!response.ok) throw new Error('Failed to get deck data');
-      const data: DeckInfo = await response.json();
+      const data: DeckInfo = await getDeckInfo(gameId);
       setDeckInfo(data);
     } catch (error) {
       setMessage(`Error: ${(error as Error).message}`);
@@ -175,9 +187,7 @@ function App() {
   const fetchPlayerScores = async () => {
     if (!gameId) return;
     try {
-      const response = await fetch(`${API_URL}/games/${gameId}/players`);
-      if (!response.ok) throw new Error('Failed to retrieve player scores');
-      const data: PlayerScoreResponseDto[] = await response.json();
+      const data: PlayerScoreResponseDto[] = await getPlayerScores(gameId);
       setPlayerScores(data);
     } catch (error) {
       setMessage(`Error: ${(error as Error).message}`);
@@ -187,9 +197,7 @@ function App() {
   const fetchPlayerHand = async (playerId: string) => {
     if (!gameId) return;
     try {
-      const response = await fetch(`${API_URL}/games/${gameId}/players/${playerId}/cards`);
-      if (!response.ok) throw new Error(`Failed to retrieve the hand from player ${playerId}`);
-      const handData: Card[] = await response.json();
+      const handData: Card[] = await getPlayerHand(gameId, playerId);
       
       setPlayers(prevPlayers => 
         prevPlayers.map(player => 
@@ -201,22 +209,37 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    // Esta função será executada sempre que 'gameId' mudar
-    if (gameId) {
-      fetchDeckInfo();
-      fetchPlayerScores();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameId]);
+  const handlePlayerSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const player = players.find(player => player.id === e.target.value) || null
+    setSelectedPlayer(player);
+  };
 
-  const findPlayer = (playerId: string) => {
-    return players.find(player => player.id === playerId) || null
-  }
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDealAmount(Number(e.target.value));
+  };
 
   const handlePlayerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewPlayerName(e.target.value);
   };
+
+  useEffect(() => {
+    fetchGameList();
+  },);
+
+  useEffect(() => {
+    if (gameId) {
+      setMessage(`Game ${gameId} loaded.`);
+      fetchDeckInfo();
+      fetchPlayerScores();
+    } else {
+      setMessage('Welcome! Create or select a game.');
+      setPlayers([]);
+      setDeckInfo(null);
+      setPlayerScores([]);
+      setSelectedPlayer(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameId]);
 
   return (
     <div className="App">
@@ -227,10 +250,28 @@ function App() {
         </p>
       </header>
 
+      <div className="controls-panel">
+        <h2>Game Lobby</h2>
+        <button onClick={handleCreateGame}>Create a new game</button>
+        
+        <h3>Available games</h3>
+        <div className="game-list">
+          {gameList.length === 0 && <p>No games were found.</p>}
+          {gameList.map(game => (
+            <div key={game.gameId} className="game-list-item">
+              <span>ID: {game.gameId} ({game.playerCount} players)</span>
+              <div>
+                <button onClick={() => setGameId(game.gameId)}>Load game</button>
+                <button onClick={() => handleDeleteGame(game.gameId)} className="delete-button">Close game</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="game-container">
         <div className="controls-panel">
           <h2>Game Configuration</h2>
-          <button onClick={handleCreateGame}>Create a new game</button>
           
           {gameId && (
             <>
@@ -260,7 +301,7 @@ function App() {
               <h3>Deal cards</h3>
               <select 
                 value={selectedPlayer?.id || ''} 
-                onChange={(e) => setSelectedPlayer(findPlayer(e.target.value))}
+                onChange={handlePlayerSelectChange}
               >
                 <option value="">-- Select a player --</option>
                 {players.map(player => (
@@ -270,7 +311,7 @@ function App() {
               <input 
                 type="number" 
                 value={dealAmount} 
-                onChange={(e) => setDealAmount(Number(e.target.value))}
+                onChange={handleAmountChange}
                 min="1"
               />
               <button onClick={handleDealCards}>Deal</button>
@@ -299,11 +340,20 @@ function App() {
                 <h3>Score (Higher to Lower)</h3>
                 <button onClick={fetchPlayerScores}>Update scores</button>
                 <ul>
-                  {playerScores.map(score => (
-                    <li key={score.playerId}>
-                      {score.playerId}: <strong>{score.totalValue} points</strong>
-                    </li>
-                  ))}
+                  {playerScores.map(score => {
+                    const player = players.find(player => player.id === score.playerId);
+                    return (
+                      <li key={score.playerId}>
+                        {player? player.name : score.playerName}: <strong>{score.totalValue} points</strong>
+                        <button 
+                          onClick={() => handleRemovePlayer(score.playerId)} 
+                          className="delete-button-small"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>

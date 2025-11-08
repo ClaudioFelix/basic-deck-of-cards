@@ -46,3 +46,8 @@ export type GameDto = {
   gameDeck: Card;
   players: Record<string, Card>;
 };
+
+export type GameSummaryDto = {
+  gameId: string;
+  playerCount: number;
+};
