@@ -108,7 +108,7 @@ class GameControllerTest {
                         .content(objectMapper.writeValueAsString(addPlayerRequest)))
         .andExpect(status().isCreated())
         .andExpect(header().string("Location", startsWith("http://localhost/games/" + gameId + "/players/")))
-        .andExpect(jsonPath("$.playerId", is(playerId.toString())));
+        .andExpect(jsonPath("$.id", is(playerId.toString())));
   }
 
   @Test
