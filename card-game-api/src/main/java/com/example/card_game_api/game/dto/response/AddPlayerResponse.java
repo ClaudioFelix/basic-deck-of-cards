@@ -8,6 +8,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class AddPlayerResponse {
-  private UUID playerId;
-  private String playerName;
+  private UUID id;
+  private String name;
 }

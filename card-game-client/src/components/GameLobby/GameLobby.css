@@ -1,0 +1,12 @@
+.game-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #555;
+}
+
+.delete-button,.close-button {
+  background-color: #ff4d4d; /* Cor vermelha para perigo */
+  color: white;
+}

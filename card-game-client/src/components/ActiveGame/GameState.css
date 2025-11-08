@@ -1,0 +1,15 @@
+/* Estilos para o painel de estado e lista de jogadores */
+.game-state,
+.player-hands {
+  background-color: #3a3f4a;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.delete-button-small {
+  background-color: #ff4d4d;
+  color: white;
+  padding: 2px 8px;
+  font-size: 0.8em;
+  margin-left: 10px;
+}

@@ -1,0 +1,12 @@
+.player-hand {
+  margin-top: 15px;
+  border-top: 1px solid #555;
+  padding-top: 15px;
+}
+
+.card-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
