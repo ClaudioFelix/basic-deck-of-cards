@@ -8,9 +8,16 @@ package com.example.card_game_api.player;
 
 import com.example.card_game_api.card.Card;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.util.ArrayList;
 import java.util.UUID;
 import java.util.List;
 
+@Data
+@AllArgsConstructor
+@EqualsAndHashCode
 public class Player {
   private final UUID id;
   private List<Card> hand;
@@ -18,5 +25,9 @@ public class Player {
 
   public Player() {
     this.id = UUID.randomUUID();
+  }
+
+  public void receiveCards(List<Card> dealtCards) {
+    hand.addAll(dealtCards);
   }
 }
