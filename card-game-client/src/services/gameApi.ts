@@ -98,7 +98,7 @@ export const getPlayerScores = async (gameId: string): Promise<PlayerScoreRespon
   return response.json();
 }
 
-export const getPlayerHand = async (gameId: string, playerId: string){
+export const getPlayerHand = async (gameId: string, playerId: string): Promise<Card[]> => {
   const response = await fetch(`${API_URL}/games/${gameId}/players/${playerId}/cards`);
   if (!response.ok) throw new Error(`Failed to retrieve the hand from player ${playerId}`);
   return response.json()
