@@ -11,18 +11,25 @@ package com.example.card_game_api.game;
 
 import com.example.card_game_api.card.Card;
 import com.example.card_game_api.player.Player;
+import jakarta.persistence.*;
 import lombok.Data;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.Map;
-import java.util.Deque;
 
+import java.util.*;
+
+@Entity
 @Data
 public class Game {
-  private final UUID id;
-  private final Deque<Card> gameDeck = new ConcurrentLinkedDeque<>();
-  private final Map<UUID, Player> players = new ConcurrentHashMap<>();
+
+  @Id
+  private UUID id;
+
+  @ElementCollection
+  @CollectionTable(name = "game_deck", joinColumns = @JoinColumn(name = "game_id"))
+  @OrderColumn
+  private final List<Card> gameDeck = new ArrayList<>();
+
+  @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<Player> players = new ArrayList<>();
 
   public Game() {
     this.id = UUID.randomUUID();

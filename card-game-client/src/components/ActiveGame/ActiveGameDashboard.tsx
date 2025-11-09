@@ -10,7 +10,6 @@ export function ActiveGameDashboard(): React.ReactElement {
   const { gameId, setGameId } = useGame();
   
   const game = useActiveGame(gameId);
-
   return (
     <div className="game-container">
       <div className="controls-panel">

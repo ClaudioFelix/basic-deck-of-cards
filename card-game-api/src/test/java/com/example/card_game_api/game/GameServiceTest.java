@@ -3,10 +3,12 @@ package com.example.card_game_api.game;
 import com.example.card_game_api.card.Card;
 import com.example.card_game_api.card.Rank;
 import com.example.card_game_api.card.Suit;
+import com.example.card_game_api.game.dto.response.AddPlayerResponse;
 import com.example.card_game_api.game.dto.response.DeckInfoResponse;
 import com.example.card_game_api.game.dto.response.GameSummaryResponse;
 import com.example.card_game_api.game.dto.response.PlayerScoreResponse;
 import com.example.card_game_api.player.Player;
+import com.example.card_game_api.player.PlayerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +28,9 @@ class GameServiceTest {
   @Mock
   private GameRepository gameRepository;
 
+  @Mock
+  private PlayerRepository playerRepository;
+
   @InjectMocks
   private GameService gameService;
 
@@ -44,7 +49,7 @@ class GameServiceTest {
     Game game1 = new Game();
     Game game2 = new Game();
     UUID playerId = UUID.randomUUID();
-    game2.getPlayers().put(playerId, new Player(playerId, new ArrayList<>(), "name"));
+    game2.getPlayers().add(new Player("Player Name", game2));
 
     when(gameRepository.findAll()).thenReturn(List.of(game1, game2));
 
@@ -131,11 +136,15 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
+    AddPlayerResponse response = gameService.addPlayer(gameId, "Test Player");
 
-    assertThat(playerId).isNotNull();
-    assertThat(game.getPlayers()).containsKey(playerId);
-    assertThat(game.getPlayers().get(playerId).getHand()).isEmpty();
+    assertThat(response).isNotNull();
+    assertThat(response.getName()).isEqualTo("Test Player");
+
+    assertThat(game.getPlayers()).hasSize(1);
+    assertThat(game.getPlayers().get(0).getName()).isEqualTo("Test Player");
+    assertThat(game.getPlayers().get(0).getHand()).isEmpty();
+    verify(gameRepository).save(game);
   }
 
   @Test
@@ -154,12 +163,16 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
-    assertThat(game.getPlayers()).containsKey(playerId);
+    AddPlayerResponse response = gameService.addPlayer(gameId, "Test Player");
+    UUID playerId = response.getId();
+
+    Player playerToRemove = game.getPlayers().get(0);
+    assertThat(game.getPlayers()).hasSize(1);
 
     gameService.removePlayer(gameId, playerId);
 
-    assertThat(game.getPlayers()).doesNotContainKey(playerId);
+    assertThat(game.getPlayers()).isEmpty();
+    verify(gameRepository, times(2)).save(game);
   }
 
   @Test
@@ -178,8 +191,12 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
+    AddPlayerResponse response = gameService.addPlayer(gameId, "name");
+    UUID playerId = response.getId();
+    Player player = game.getPlayers().get(0);
+
     gameService.addDeckToGame(gameId);
-    UUID playerId = gameService.addPlayer(gameId, "name");
+
     gameService.dealCards(gameId, playerId, 5);
 
     int deckSizeBefore = game.getGameDeck().size();
@@ -197,7 +214,10 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
+    AddPlayerResponse response = gameService.addPlayer(gameId, "name");
+    UUID playerId = response.getId();
+    Player player = game.getPlayers().get(0);
+
     gameService.addDeckToGame(gameId);
     List<Card> deckBeforeDeal = new ArrayList<>(game.getGameDeck());
 
@@ -206,8 +226,11 @@ class GameServiceTest {
 
     assertThat(dealtCards).hasSize(5);
     assertThat(game.getGameDeck()).hasSize(47);
-    assertThat(game.getPlayers().get(playerId).getHand()).hasSize(5);
-    assertThat(game.getPlayers().get(playerId).getHand()).isEqualTo(dealtCards);
+    assertThat(player.getHand()).hasSize(5);
+    assertThat(player.getHand()).isEqualTo(dealtCards);
+
+    verify(gameRepository, times(2)).save(game);
+    verify(playerRepository).save(player);
 
     deckBeforeDeal.removeAll(dealtCards);
     assertThat(deckAfterDeal).containsExactlyInAnyOrderElementsOf(deckBeforeDeal);
@@ -219,7 +242,10 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
+    AddPlayerResponse response = gameService.addPlayer(gameId, "name");
+    UUID playerId = response.getId();
+    Player player = game.getPlayers().get(0);
+
     gameService.addDeckToGame(gameId);
     gameService.shuffle(gameId);
 
@@ -233,10 +259,13 @@ class GameServiceTest {
     List<Card> emptyDeal = gameService.dealCards(gameId, playerId, 1);
 
     assertThat(allDealtCards).hasSize(52);
-    assertThat(game.getPlayers().get(playerId).getHand()).hasSize(52);
+    assertThat(player.getHand()).hasSize(52);
     assertThat(allDealtCards.stream().distinct().count()).isEqualTo(52);
     assertThat(game.getGameDeck()).isEmpty();
     assertThat(emptyDeal).isEmpty();
+
+    verify(gameRepository, times(53)).save(game);
+    verify(playerRepository, times(52)).save(player);
   }
 
   @Test
@@ -245,13 +274,19 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
+    AddPlayerResponse response = gameService.addPlayer(gameId, "name");
+    UUID playerId = response.getId();
+    Player player = game.getPlayers().get(0);
+
 
     List<Card> dealtCards = gameService.dealCards(gameId, playerId, 1);
 
     assertThat(dealtCards).isEmpty();
     assertThat(game.getGameDeck()).isEmpty();
-    assertThat(game.getPlayers().get(playerId).getHand()).isEmpty();
+    assertThat(player.getHand()).isEmpty();
+
+    verify(gameRepository, times(1)).save(game);
+    verify(playerRepository, never()).save(player);
   }
 
   @Test
@@ -263,8 +298,8 @@ class GameServiceTest {
     UUID invalidPlayerId = UUID.randomUUID();
 
     assertThatThrownBy(() -> gameService.dealCards(gameId, invalidPlayerId, 1))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Player not in game");
+        .isInstanceOf(NoSuchElementException.class)
+        .hasMessage("Player not found in game");
   }
 
   @Test
@@ -273,9 +308,13 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID playerId = gameService.addPlayer(gameId, "name");
+    AddPlayerResponse response = gameService.addPlayer(gameId, "Test Player");
+    UUID playerId = response.getId();
+
+    Player player = game.getPlayers().get(0);
+
     Card card1 = new Card(Suit.HEARTS, Rank.ACE);
-    game.getPlayers().get(playerId).getHand().add(card1);
+    player.getHand().add(card1);
 
     List<Card> hand = gameService.getPlayerHand(gameId, playerId);
 
@@ -288,27 +327,29 @@ class GameServiceTest {
     gameId = game.getId();
     when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
 
-    UUID player1Id = gameService.addPlayer(gameId, "name1");
-    game.getPlayers().get(player1Id).getHand().add(new Card(Suit.HEARTS, Rank.TEN));
-    game.getPlayers().get(player1Id).getHand().add(new Card(Suit.CLUBS, Rank.TWO));
+    Player player1 = new Player("Player 1", game);
+    player1.getHand().add(new Card(Suit.HEARTS, Rank.TEN));
+    player1.getHand().add(new Card(Suit.CLUBS, Rank.TWO));
 
-    UUID player2Id = gameService.addPlayer(gameId, "name2");
-    game.getPlayers().get(player2Id).getHand().add(new Card(Suit.SPADES, Rank.KING));
+    Player player2 = new Player("Player 2", game);
+    player2.getHand().add(new Card(Suit.SPADES, Rank.KING));
 
-    UUID player3Id = gameService.addPlayer(gameId, "name3");
-    game.getPlayers().get(player3Id).getHand().add(new Card(Suit.DIAMONDS, Rank.ACE));
-    game.getPlayers().get(player3Id).getHand().add(new Card(Suit.HEARTS, Rank.FIVE));
+    Player player3 = new Player("Player 3", game);
+    player3.getHand().add(new Card(Suit.DIAMONDS, Rank.ACE));
+    player3.getHand().add(new Card(Suit.HEARTS, Rank.FIVE));
+
+    game.getPlayers().addAll(List.of(player1, player2, player3));
 
     List<PlayerScoreResponse> scores = gameService.getPlayersWithScores(gameId);
 
     assertThat(scores).hasSize(3);
-    assertThat(scores.get(0).getPlayerId()).isEqualTo(player2Id);
+    assertThat(scores.get(0).getPlayerId()).isEqualTo(player2.getId());
     assertThat(scores.get(0).getTotalValue()).isEqualTo(13);
 
-    assertThat(scores.get(1).getPlayerId()).isEqualTo(player1Id);
+    assertThat(scores.get(1).getPlayerId()).isEqualTo(player1.getId());
     assertThat(scores.get(1).getTotalValue()).isEqualTo(12);
 
-    assertThat(scores.get(2).getPlayerId()).isEqualTo(player3Id);
+    assertThat(scores.get(2).getPlayerId()).isEqualTo(player3.getId());
     assertThat(scores.get(2).getTotalValue()).isEqualTo(6);
   }
 

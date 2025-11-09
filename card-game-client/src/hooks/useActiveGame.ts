@@ -32,7 +32,9 @@ export function useActiveGame(gameId: string | null) {
       setPlayerScores(data);
 
       setPlayers(prevPlayers => {
+        
         return data.map(score => {
+          fetchPlayerHand(score.playerId)
           const existingPlayer = prevPlayers.find(player => player.id === score.playerId);
           if(existingPlayer) return existingPlayer;
 

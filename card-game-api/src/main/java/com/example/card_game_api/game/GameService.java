@@ -33,10 +33,13 @@ package com.example.card_game_api.game;
 import com.example.card_game_api.card.Card;
 import com.example.card_game_api.card.Rank;
 import com.example.card_game_api.card.Suit;
+import com.example.card_game_api.game.dto.response.AddPlayerResponse;
 import com.example.card_game_api.game.dto.response.DeckInfoResponse;
 import com.example.card_game_api.game.dto.response.GameSummaryResponse;
 import com.example.card_game_api.game.dto.response.PlayerScoreResponse;
 import com.example.card_game_api.player.Player;
+import com.example.card_game_api.player.PlayerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -47,9 +50,11 @@ import java.util.stream.Collectors;
 public class GameService {
 
   private final GameRepository gameRepository;
+  private final PlayerRepository playerRepository;
 
-  public GameService(GameRepository gameRepository) {
+  public GameService(GameRepository gameRepository, PlayerRepository playerRepository) {
     this.gameRepository = gameRepository;
+    this.playerRepository = playerRepository;
   }
 
   public Game createGame() {
@@ -57,6 +62,7 @@ public class GameService {
     return gameRepository.save(newGame);
   }
 
+  @Transactional
   public void deleteGame(UUID gameId) {
     gameRepository.deleteById(gameId);
   }
@@ -75,6 +81,7 @@ public class GameService {
                .collect(Collectors.toList());
   }
 
+  @Transactional
   public void addDeckToGame(UUID gameId) {
     Game game = findGameById(gameId);
     List<Card> standardDeck = new ArrayList<>();
@@ -86,6 +93,7 @@ public class GameService {
     game.getGameDeck().addAll(standardDeck);
   }
 
+  @Transactional
   public void shuffle(UUID gameId) {
     Game game = findGameById(gameId);
     List<Card> cards = new ArrayList<>(game.getGameDeck());
@@ -101,63 +109,73 @@ public class GameService {
     game.getGameDeck().addAll(cards);
   }
 
-  public UUID addPlayer(UUID gameId, String playerName) {
+  @Transactional
+  public AddPlayerResponse addPlayer(UUID gameId, String playerName) {
     Game game = findGameById(gameId);
-    UUID playerId = UUID.randomUUID();
-    Player player = new Player(playerId, new ArrayList<>(), playerName);
-    game.getPlayers().put(playerId, player);
-    return playerId;
+    Player player = new Player(playerName, game);
+    game.getPlayers().add(player);
+    gameRepository.save(game);
+    return new AddPlayerResponse(player.getId(), player.getName());
   }
 
+  @Transactional
   public void removePlayer(UUID gameId, UUID playerId) {
     Game game = findGameById(gameId);
-    if (!game.getPlayers().containsKey(playerId)) {
-      throw new NoSuchElementException("Player not found in game");
-    }
-    game.getPlayers().remove(playerId);
+    Player playerToRemove = game.getPlayers().stream()
+                                .filter(p -> p.getId().equals(playerId))
+                                .findFirst()
+                                .orElseThrow(() -> new NoSuchElementException("Player not found in game"));
+    game.getPlayers().remove(playerToRemove);
+    gameRepository.save(game);
   }
 
+  @Transactional
   public List<Card> dealCards(UUID gameId, UUID playerId, int amount) {
     Game game = findGameById(gameId);
-    if (!game.getPlayers().containsKey(playerId)) {
-      throw new IllegalArgumentException("Player not in game");
+    Player player = game.getPlayers().stream()
+                                .filter(p -> p.getId().equals(playerId))
+                                .findFirst()
+                                .orElseThrow(() -> new NoSuchElementException("Player not found in game"));
+
+    List<Card> deck = game.getGameDeck();
+    if (deck.isEmpty()) {
+      return Collections.emptyList();
     }
 
     List<Card> dealtCards = new ArrayList<>();
-    for (int i = 0; i < amount; i++) {
-      Card card = game.getGameDeck().poll();
-      if (card != null) {
-        dealtCards.add(card);
-      } else {
-        break;
-      }
+    for (int i = 0; i < amount &&!deck.isEmpty(); i++) {
+      Card card = deck.remove(0);
+      dealtCards.add(card);
     }
 
-    game.getPlayers().get(playerId).receiveCards(dealtCards);
+    player.getHand().addAll(dealtCards);
+    gameRepository.save(game);
+    playerRepository.save(player);
     return dealtCards;
   }
 
   public List<Card> getPlayerHand(UUID gameId, UUID playerId) {
     Game game = findGameById(gameId);
-    if (!game.getPlayers().containsKey(playerId)) {
-      throw new NoSuchElementException("Player not in game");
-    }
-    return game.getPlayers().get(playerId).getHand();
+    Player player = game.getPlayers().stream()
+                                .filter(p -> p.getId().equals(playerId))
+                                .findFirst()
+                                .orElseThrow(() -> new NoSuchElementException("Player not found in game"));
+
+    return player.getHand();
   }
 
   public List<PlayerScoreResponse> getPlayersWithScores(UUID gameId) {
     Game game = findGameById(gameId);
 
-    return game.getPlayers().entrySet().stream()
-               .map(entry -> {
-                 UUID playerId = entry.getKey();
-                 String playerName = entry.getValue().getName();
-                 List<Card> hand = entry.getValue().getHand();
-                 int totalValue = hand.stream()
+    return game.getPlayers().stream()
+               .map(player -> {
+                 int totalValue = player.getHand().stream()
                                       .mapToInt(card -> card.getRank().getValue())
                                       .sum();
-                 return new PlayerScoreResponse(playerId, playerName, totalValue);
-               }).sorted().collect(Collectors.toList());
+                 return new PlayerScoreResponse(player.getId(), player.getName(), totalValue);
+               })
+               .sorted()
+               .collect(Collectors.toList());
   }
 
   public DeckInfoResponse getDeckInfo(UUID gameId) {
@@ -172,16 +190,15 @@ public class GameService {
       suitCounts.putIfAbsent(suit.name(), 0L);
     }
 
-    List<Card> remainingCards = new ArrayList<>(game.getGameDeck());
+    List<Card> sortedCards = new ArrayList<>(game.getGameDeck());
     Comparator<Card> cardComparator = Comparator
-                                          .comparing(Card::getSuit) // Usa a ordem do enum
+                                          .comparing(Card::getSuit)
                                           .thenComparing(
                                               Card::getRank,
-                                              Comparator.comparingInt(Rank::getValue).reversed() // King -> Ace
+                                              Comparator.comparingInt(Rank::getValue).reversed()
                                           );
-    remainingCards.sort(cardComparator);
+    sortedCards.sort(cardComparator);
 
-    return new DeckInfoResponse(game.getGameDeck().size(), suitCounts, remainingCards);
+    return new DeckInfoResponse(game.getGameDeck().size(), suitCounts, sortedCards);
   }
-
 }

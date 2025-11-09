@@ -67,13 +67,13 @@ public class GameController {
   @PostMapping("/{gameId}/players")
   @Operation(summary = "Add a new player to the game")
   public ResponseEntity<AddPlayerResponse> addPlayer(@PathVariable UUID gameId, @RequestBody AddPlayerRequest addPlayerRequest) {
-    UUID playerId = gameService.addPlayer(gameId, addPlayerRequest.getName());
+    AddPlayerResponse response = gameService.addPlayer(gameId, addPlayerRequest.getName());
     URI location = ServletUriComponentsBuilder
                        .fromCurrentRequest()
                        .path("/{id}")
-                       .buildAndExpand(playerId)
+                       .buildAndExpand(response.getId())
                        .toUri();
-    return ResponseEntity.created(location).body(new AddPlayerResponse(playerId, addPlayerRequest.getName()));
+    return ResponseEntity.created(location).body(response);
   }
 
   @DeleteMapping("/{gameId}/players/{playerId}")
