@@ -7,6 +7,6 @@
 }
 
 .delete-button,.close-button {
-  background-color: #ff4d4d; /* Cor vermelha para perigo */
+  background-color: #ff4d4d;
   color: white;
 }

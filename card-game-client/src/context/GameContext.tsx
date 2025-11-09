@@ -39,7 +39,7 @@ export function GameProvider({ children }: GameProviderProps) {
       const data: GameDto = await gameApi.createGame();
       setGameId(data.id);
       setMessage(`Game created: ${data.id}. Add decks and players.`);
-      await fetchGameList(); // Atualiza a lista
+      await fetchGameList();
     } catch (error) {
       setMessage(`Error: ${(error as Error).message}`);
     }

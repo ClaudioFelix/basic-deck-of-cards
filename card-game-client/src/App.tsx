@@ -10,7 +10,7 @@ function AppHeader() {
   return (
     <header className="App-header">
       <h1>Card Game Client</h1>
-      <p className="message">
+      <p className="message" data-testid="message">
         <strong>Status:</strong> {message}
       </p>
     </header>

@@ -38,7 +38,7 @@ export function GameControls(props: GameControlsProps): React.ReactElement {
       <button onClick={addDeck}>Add a new deck</button>
       <button onClick={shuffle}>Shuffle deck</button>
       <div className="add-player-controls">
-        <h3>Add player</h3>
+        <h3>New player</h3>
         <input 
           type="text"
           placeholder="Player name"
@@ -49,7 +49,7 @@ export function GameControls(props: GameControlsProps): React.ReactElement {
           onClick={addPlayer}
           disabled={!newPlayerName.trim()}
         >
-          Add
+          Add player
         </button>
       </div>
 
@@ -66,10 +66,9 @@ export function GameControls(props: GameControlsProps): React.ReactElement {
             ))}
           </select>
           <input 
-            type="number" 
+            data-testid="deal-amount" 
             value={dealAmount} 
             onChange={handleAmountChange}
-            min="1"
           />
           <button onClick={dealCards}>Deal</button>
         </div>

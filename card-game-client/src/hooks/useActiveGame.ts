@@ -2,18 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { Player, DeckInfo, PlayerScore, Card, PlayerScoreResponseDto, AddPlayerResponseDto } from '../types/api';
 import * as gameApi from '../services/gameApi';
 import { useGame } from '../context/GameContext';
+import { emptyDeckInfo } from '../assets/emptyDeck';
 
 export function useActiveGame(gameId: string | null) {
 
   const { setMessage } = useGame();
   
   const [players, setPlayers] = useState<Player[]>([]);
-  const [deckInfo, setDeckInfo] = useState<DeckInfo | null>(null);
+  const [deckInfo, setDeckInfo] = useState<DeckInfo>(emptyDeckInfo);
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [playerName, setPlayerName] = useState<string>('');
   const [newPlayerName, setNewPlayerName] = useState<string>('');
-  const [dealAmount, setDealAmount] = useState<number>(1);
+  const [dealAmount, setDealAmount] = useState<number>(0);
 
   const fetchDeckInfo = useCallback(async () => {
     if (!gameId) return;
@@ -34,7 +35,9 @@ export function useActiveGame(gameId: string | null) {
       setPlayers(prevPlayers => {
         return data.map(score => {
           const existingPlayer = prevPlayers.find(player => player.id === score.playerId);
-          return existingPlayer? existingPlayer : {
+          if(existingPlayer) return existingPlayer;
+
+          return  {
             id: score.playerId,
             name: score.playerName,
             hand: []
@@ -69,7 +72,7 @@ export function useActiveGame(gameId: string | null) {
     } else {
       setMessage('Welcome! Create or select a game.');
       setPlayers([]);
-      setDeckInfo(null);
+      setDeckInfo(emptyDeckInfo);
       setPlayerScores([]);
       setSelectedPlayer(null);
     }
@@ -116,14 +119,14 @@ export function useActiveGame(gameId: string | null) {
       const data: AddPlayerResponseDto = await gameApi.addPlayer(gameId, newPlayerName);
       const newPlayer: Player = { id: data.id, name: newPlayerName, hand: [] };
       setPlayers(prevPlayers => [...prevPlayers, newPlayer]);
-      
+      setPlayerScores(prevScores => [...prevScores, {playerId: data.id, playerName: newPlayerName, totalValue: 0}])
       setMessage(`Player ${newPlayerName} added.`);
       setNewPlayerName('');
 
       if (players.length === 0) {
         setSelectedPlayer(newPlayer);
       }
-      await fetchPlayerScores()
+      
     } catch (error) {
       setMessage(`Erro: ${(error as Error).message}`);
     }

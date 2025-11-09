@@ -20,7 +20,9 @@ export function GameState(props: GameStateProps): React.ReactElement {
         <h3>Deck information</h3>
         {deckInfo ? (
           <>
-            <p><strong>Cards total:</strong> {deckInfo.totalCards}</p>
+            <p data-testid="deck-total-cards">
+              <strong>Cards total:</strong> {deckInfo.totalCards}
+            </p>
             <ul>
               {deckInfo.suitCounts && Object.entries(deckInfo.suitCounts).map(([suit, count]) => (
                 <li key={suit}>{suit}: {count}</li>
@@ -36,13 +38,13 @@ export function GameState(props: GameStateProps): React.ReactElement {
           {playerScores.map(score => {
             const player = players.find(player => player.id === score.playerId);
             return (
-              <li key={score.playerId}>
+              <li key={score.playerId} data-testid="player-score">
                 {player? player.name : score.playerName}: <strong>{score.totalValue} points</strong>
                 <button 
                   onClick={() => removePlayer(score.playerId)} 
                   className="delete-button-small"
                 >
-                  Remove
+                  Remove player
                 </button>
               </li>
             );

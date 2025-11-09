@@ -12,7 +12,7 @@ export function PlayerList(props: PlayerListProps): React.ReactElement {
     <div className="player-hands">
       <h2>Player hands</h2>
       {players.map(player => (
-        <div key={player.id} className="player-hand">
+        <div key={player.id} className="player-hand" data-testid="player-list-item">
           <h4>Player: {player.name}</h4>
           <div className="card-list">
             {player.hand.length > 0 ? (
