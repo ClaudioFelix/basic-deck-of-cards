@@ -24,7 +24,7 @@ export type PlayerScoreResponseDto = {
 export type DeckInfo = {
   totalCards: number;
   suitCounts: { [key: string]: number };
-  sortedCards: Card;
+  sortedCards: Card[];
 };
 
 export type AddPlayerResponseDto = {
@@ -43,7 +43,7 @@ export type DealRequestDto = {
 
 export type GameDto = {
   id: string;
-  gameDeck: Card;
+  gameDeck: Card[];
   players: Record<string, Card>;
 };
 

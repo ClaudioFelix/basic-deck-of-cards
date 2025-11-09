@@ -17,7 +17,7 @@ export function ActiveGameDashboard(): React.ReactElement {
         <h2>Game Configuration</h2>
         {gameId && (
           <>
-            <p><strong>Current Game ID:</strong> {gameId}</p>
+            <p data-testid="current-game-id"><strong>Current Game ID:</strong> {gameId}</p>
             <button onClick={() => setGameId(null)} className="close-button">Close game</button>
             <hr/>
             <GameControls {...game} />
