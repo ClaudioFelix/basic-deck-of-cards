@@ -83,8 +83,8 @@ describe('App Integration Test', () => {
     await user.type(amountInput, '5');
     await user.selectOptions(playerSelect, 'Player 1');
     await user.click(dealButton);
-
-    expect(await screen.findByText(/FIVE of CLUBS/i)).toBeInTheDocument();
+    
+    expect(screen.getAllByTestId("player-list-item")[0]).toHaveTextContent(/FIVE of CLUBS/);
     
     expect(mockedGameApi.getGameList).toHaveBeenCalled();
     expect(mockedGameApi.getDeckInfo).toHaveBeenCalledWith('game-1');

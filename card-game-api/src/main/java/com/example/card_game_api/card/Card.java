@@ -4,14 +4,24 @@
 
 package com.example.card_game_api.card;
 
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+@Embeddable
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode
 public class Card {
+
+  @Enumerated(EnumType.STRING)
   private Suit suit;
+
+  @Enumerated(EnumType.STRING)
   private Rank rank;
 }

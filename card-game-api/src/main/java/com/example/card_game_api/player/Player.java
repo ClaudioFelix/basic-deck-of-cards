@@ -8,26 +8,40 @@ package com.example.card_game_api.player;
 
 import com.example.card_game_api.card.Card;
 
-import lombok.AllArgsConstructor;
+import com.example.card_game_api.game.Game;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.List;
 
+@Entity
 @Data
-@AllArgsConstructor
-@EqualsAndHashCode
+@NoArgsConstructor
 public class Player {
-  private final UUID id;
-  private List<Card> hand;
+
+  @Id
+  private UUID id;
   private String name;
 
-  public Player() {
-    this.id = UUID.randomUUID();
-  }
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "game_id")
+  @ToString.Exclude
+  @EqualsAndHashCode.Exclude
+  private Game game;
 
-  public void receiveCards(List<Card> dealtCards) {
-    hand.addAll(dealtCards);
+  @ElementCollection
+  @CollectionTable(name = "player_hand", joinColumns = @JoinColumn(name = "player_id"))
+  @OrderColumn
+  private List<Card> hand = new ArrayList<>();
+
+  public Player(String name, Game game) {
+    this.id = UUID.randomUUID();
+    this.name = name;
+    this.game = game;
   }
 }

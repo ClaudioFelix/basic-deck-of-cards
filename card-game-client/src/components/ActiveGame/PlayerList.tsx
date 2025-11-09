@@ -1,4 +1,3 @@
-import React from 'react';
 import { type useActiveGame } from '../../hooks/useActiveGame';
 import { CardComponent } from '../CardComponent/CardComponent';
 import './PlayerList.css';
@@ -7,7 +6,6 @@ type PlayerListProps = ReturnType<typeof useActiveGame>;
 
 export function PlayerList(props: PlayerListProps): React.ReactElement {
   const { players } = props;
-
   return (
     <div className="player-hands">
       <h2>Player hands</h2>

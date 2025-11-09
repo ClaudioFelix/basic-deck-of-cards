@@ -98,7 +98,7 @@ class GameControllerTest {
   void addPlayer_shouldReturn201AndPlayerId() throws Exception {
     UUID gameId = UUID.randomUUID();
     UUID playerId = UUID.randomUUID();
-    when(gameService.addPlayer(gameId, "name")).thenReturn(playerId);
+    when(gameService.addPlayer(gameId, "name")).thenReturn(new AddPlayerResponse(playerId, "Player Name"));
 
     AddPlayerRequest addPlayerRequest = new AddPlayerRequest();
     addPlayerRequest.setName("name");
