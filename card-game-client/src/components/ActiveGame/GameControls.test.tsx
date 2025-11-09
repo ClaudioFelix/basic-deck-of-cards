@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { GameControls } from './GameControls';
 import { useActiveGame } from '../../hooks/useActiveGame';
 import { Player } from '../../types/api';
+import { emptyDeckInfo } from '../../assets/emptyDeck';
 
 const createMockHookProps = (): ReturnType<typeof useActiveGame> => ({
   players: [],
-  deckInfo: null,
+  deckInfo: emptyDeckInfo,
   playerScores: [],
   selectedPlayer: null,
   dealAmount: 0,
@@ -65,14 +66,14 @@ describe('GameControls Component', () => {
     expect(mockHookProps.setNewPlayerName).toHaveBeenCalledWith('t');
   });
 
-  test('should disable "Add" button if name is empty', () => {
+  test('should disable "Add player" button if name is empty', () => {
     render(<GameControls {...mockHookProps} />);
     
     const addButton = screen.getByRole('button', { name: /Add player/i });
     expect(addButton).toBeDisabled();
   });
 
-  test('should enable "Add" button when newPlayerName prop is not empty', () => {
+  test('should enable "Add player" button when newPlayerName prop is not empty', () => {
     
     const propsWithAName = {
     ...mockHookProps,

@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { PlayerList } from './PlayerList';
 import { useActiveGame } from '../../hooks/useActiveGame';
 import { Player, Card } from '../../types/api';
+import { emptyDeckInfo } from '../../assets/emptyDeck';
 
 const mockHookProps: ReturnType<typeof useActiveGame> = {
   players: [],
-  deckInfo: null,
+  deckInfo: emptyDeckInfo,
   playerScores: [],
   selectedPlayer: null,
   dealAmount: 1,

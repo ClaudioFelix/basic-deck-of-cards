@@ -5,10 +5,11 @@ import { GameState } from './GameState';
 import { useActiveGame } from '../../hooks/useActiveGame';
 import { DeckInfo, PlayerScore, Player } from '../../types/api';
 import { standardDeckInfo } from '../../assets/standardDeck';
+import { emptyDeckInfo } from '../../assets/emptyDeck';
 
 const mockHookProps: ReturnType<typeof useActiveGame> = {
   players: [],
-  deckInfo: null,
+  deckInfo: emptyDeckInfo,
   playerScores: [],
   selectedPlayer: null,
   dealAmount: 1,
@@ -30,11 +31,6 @@ describe('GameState Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     window.confirm = jest.fn(() => true);
-  });
-
-  test('should render loading state when deckInfo is null', () => {
-    render(<GameState {...mockHookProps} deckInfo={null} />);
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
   });
 
   test('should render deck info and player scores correctly', () => {

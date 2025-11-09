@@ -12,7 +12,6 @@ export function useActiveGame(gameId: string | null) {
   const [deckInfo, setDeckInfo] = useState<DeckInfo>(emptyDeckInfo);
   const [playerScores, setPlayerScores] = useState<PlayerScore[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [playerName, setPlayerName] = useState<string>('');
   const [newPlayerName, setNewPlayerName] = useState<string>('');
   const [dealAmount, setDealAmount] = useState<number>(0);
 
