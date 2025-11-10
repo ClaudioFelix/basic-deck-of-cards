@@ -25,7 +25,22 @@ export function useActiveGame(gameId: string | null) {
     }
   }, [gameId, setMessage]);
 
-  const fetchPlayerScores = useCallback(async () => {
+  const fetchPlayerHand = useCallback(async (playerId: string) => {
+    if (!gameId) return;
+    try {
+      const handData: Card[] = await gameApi.getPlayerHand(gameId, playerId);
+      
+      setPlayers(prevPlayers => 
+        prevPlayers.map(player => 
+          player.id === playerId ? { ...player, hand: handData } : player
+        )
+      );
+    } catch (error) {
+      setMessage(`Error: ${(error as Error).message}`);
+    }
+  }, [gameId, setMessage]);
+
+const fetchPlayerScores = useCallback(async () => {
     if (!gameId) return;
     try {
       const data: PlayerScoreResponseDto[] = await gameApi.getPlayerScores(gameId);
@@ -48,22 +63,7 @@ export function useActiveGame(gameId: string | null) {
     } catch (error) {
       setMessage(`Error: ${(error as Error).message}`);
     }
-  }, [gameId, setMessage]);
-
-  const fetchPlayerHand = useCallback(async (playerId: string) => {
-    if (!gameId) return;
-    try {
-      const handData: Card[] = await gameApi.getPlayerHand(gameId, playerId);
-      
-      setPlayers(prevPlayers => 
-        prevPlayers.map(player => 
-          player.id === playerId ? { ...player, hand: handData } : player
-        )
-      );
-    } catch (error) {
-      setMessage(`Error: ${(error as Error).message}`);
-    }
-  }, [gameId, setMessage]);
+  }, [gameId, setMessage, fetchPlayerHand]);
 
   useEffect(() => {
     if (gameId) {
@@ -77,7 +77,7 @@ export function useActiveGame(gameId: string | null) {
       setPlayerScores([]);
       setSelectedPlayer(null);
     }
-  }, [gameId]);
+  }, [gameId, fetchDeckInfo, fetchPlayerScores, setMessage]);
 
   const addDeck = async () => {
     if (!gameId) {

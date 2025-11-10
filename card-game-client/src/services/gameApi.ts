@@ -22,7 +22,7 @@ export const deleteGame = async (idToDelete: string): Promise<void> => {
   const response = await fetch(`${API_URL}/games/${idToDelete}`, {
                                 method: 'DELETE',
                               });
-  if (!response.ok && response.status != 204) throw new Error('Failed to close game');
+  if (!response.ok && response.status !== 204) throw new Error('Failed to close game');
 }
 
 export const removePlayer = async (gameId: string, playerId: string): Promise<void> => {
