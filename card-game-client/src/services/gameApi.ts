@@ -1,6 +1,6 @@
 import { AddPlayerRequestDto, AddPlayerResponseDto, Card, DealRequestDto, DeckInfo, GameDto, GameSummaryDto, PlayerScoreResponseDto } from "../types/api";
 
-const API_URL = 'http://localhost:8080';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const getGameList = async (): Promise<GameSummaryDto[]> => {
   const response = await fetch(`${API_URL}/games`);
