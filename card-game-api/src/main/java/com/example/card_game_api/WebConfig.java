@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig {
 
-  @Value("${ALLOWED_ORIGIN}")
+  @Value("${ALLOWED_ORIGIN:http://localhost:3000}")
   private String allowedOrigin;
 
   @Bean
