@@ -1,46 +1,87 @@
-# Getting Started with Create React App
+# Card Game Client - React Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is the client for the **Card Game Spring Boot API**. It is a single-page application (SPA) built using React and TypeScript.
 
-## Available Scripts
+This application provides a user interface to interact with all features of the backend API, including managing multiple game sessions, adding/removing players, dealing cards, and viewing the real-time state of any active game.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+  * **Game Lobby System:**
+      * Fetch and display a list of all available games from the backend.
+      * Create new game sessions.
+      * Delete existing game sessions.
+      * Load any game to make it the "active" session.
+  * **Active Game Dashboard:**
+      * **Player Management:** Add new players by name and remove players from the game.
+      * **Deck Controls:** Add a new 52-card deck to the shoe and shuffle the shoe at any time.
+      * **Deal Cards:** Select a specific player and deal a custom number of cards to them.
+  * **Real-time State Display:**
+      * **Player Scores:** Automatically displays a sorted list of all players and their current hand scores.
+      * **Player Hands:** View the complete list of cards for every player in the game.
+      * **Deck Information:** View a detailed breakdown of the undealt deck, including total remaining cards and a count by suit.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Tech Stack
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+  * **Library:** React 18+ (with Hooks)
+  * **Language:** TypeScript
+  * **State Management:** React Context (`useContext`) & Custom Hooks
+  * **API Communication:** Browser `fetch` API (`async/await`)
+  * **Testing:** Jest & React Testing Library (with `user-event`)
+  * **Styling:** Standard CSS (modularized by component)
 
-### `npm test`
+## Getting Started
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Follow these instructions to get the project running on your local machine for development and testing.
 
-### `npm run build`
+### Prerequisites
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+You will need the following tools installed on your system:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+  * [Node.js](https://nodejs.org/) (v16 or newer)
+  * `npm` (which comes with Node.js)
+  * **Crucially, the([Backend API](https://github.com/ClaudioFelix/basic-deck-of-cards/tree/main/card-game-api)) must be running** on `http://localhost:8080` for this frontend to function.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Installation & Running
 
-### `npm run eject`
+1.  **Clone the repository:**
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+    ```bash
+    git clone https://github.com/your-username/card-game-client.git
+    cd card-game-client
+    ```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2.  **Install dependencies:**
+    This will install React and all other necessary packages.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+    ```bash
+    npm install
+    ```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+3.  **Run the application:**
+    This starts the React development server, which will automatically open in your browser.
 
-## Learn More
+    ```bash
+    npm start
+    ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+The application will be available and running at **[http://localhost:3000](http://localhost:3000)**.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Running Tests
+
+This project is configured with a test suite using React Testing Library.
+
+### Interactive Watch Mode (Recommended for Development)
+
+This command will launch the test runner in interactive mode. It automatically re-runs tests when you save a file.
+
+```bash
+npm test
+```
+
+### Single Run (For CI/CD)
+
+This command runs all tests once and provides a final report.
+
+```bash
+CI=true npm test
+```
