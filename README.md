@@ -2,8 +2,8 @@
 
 This repository contains the complete full-stack implementation of a multi-game, multi-player card game application. The project is separated into two distinct services: a RESTful API backend built with Spring Boot and a single-page application built with React.
 
-  * **Backend:**(./card-game-api/README.md)
-  * **Frontend:**(./card-game-client/README.md)
+  * [Backend API](https://github.com/ClaudioFelix/basic-deck-of-cards/tree/main/card-game-api)
+  * [Frontend](https://github.com/ClaudioFelix/basic-deck-of-cards/tree/main/card-game-client)
 
 ## Overview
 
