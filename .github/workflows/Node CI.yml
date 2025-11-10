@@ -1,0 +1,54 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # This is the key fix:
+    # Set a default directory for all 'run' commands in this job
+    defaults:
+      run:
+        working-directory: ./card-game-client
+
+    strategy:
+      matrix:
+        # Using 20.x as it's the current LTS version
+        node-version: [20.x] 
+
+    steps:
+      # Step 1: Check out the repository code first
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Node.js environment
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          # Point the cache to the correct package-lock.json
+          cache-dependency-path: card-game-client/package-lock.json
+
+      # These 'run' steps will now automatically execute
+      # inside the './card-game-client' directory
+      # as defined in the 'defaults' section above.
+      
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build --if-present
+
+      - name: Test Project
+        run: npm run test
+        
+
+      - name: Run Tests
+        # CI=true is correct for running tests in a non-interactive environment [1]
+        run: CI=true npm test
